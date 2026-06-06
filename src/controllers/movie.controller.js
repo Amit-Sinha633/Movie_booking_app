@@ -13,7 +13,7 @@ const createMovie = async (req, res) => {
       releaseStatus,
     } = req.body;
     console.log(req.body);
-    
+
     const newMovie = await Movie.create({
       name,
       description,
@@ -111,9 +111,14 @@ const updateMovie = async (req, res) => {
       });
     }
     const movie = await Movie.findByIdAndUpdate(movieId, req.body, {
-      new: true,
+      returnDocument: "after",
       runVlaidators: true,
     }); // suppose we have some validation in the schema field so if we wants to keep the validation even when we are updating we have to use runVlaidators:true
+    if (!movie) {
+      return res.status(400).json({
+        msg: "No movie found",
+      });
+    }
     return res.status(200).json({
       success: true,
       error: {},
@@ -129,4 +134,40 @@ const updateMovie = async (req, res) => {
     });
   }
 };
-export { createMovie, deleteMovie, getMovie, updateMovie };
+
+const getMovies = async (req, res) => {
+  const movies = await Movie.find();
+  return res.status(200).json({
+    msg: "These are all the movies",
+    data: movies,
+  });
+};
+
+const getMovieByName = async (req, res) => {
+  let query = {};
+  if (req.query.name) {
+    query.name = req.query.name;
+  } else {
+    return res.status(400).json({
+      msg: "Give the movie name",
+    });
+  }
+  const movie = await Movie.findOne(query);
+  if (!movie) {
+    return res.status(404).json({
+      msg: "No movie found in the data base",
+    });
+  }
+  return res.status(200).json({
+    msg: "This is the movie",
+    data: movie,
+  });
+};
+export {
+  createMovie,
+  deleteMovie,
+  getMovie,
+  updateMovie,
+  getMovies,
+  getMovieByName,
+};
