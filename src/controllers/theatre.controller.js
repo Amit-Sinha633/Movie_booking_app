@@ -57,6 +57,33 @@ const getTheatre = async(req,res) =>{
     }
 }
 
+const getTheatresByCityOrPinCode = async(req,res) =>{
+    try {
+        const {city,pinCode,name} = req.query
+        if(!(city || pinCode || name)){
+            errorResponse.msg = "City or pinCode or name is required"
+            return res.status(400).json(errorResponse)
+        }
+        const theatres = await Theatre.findOne({
+            $or:[
+                {city},
+                {pinCode},
+                {name}
+            ]
+        })
+        if(!theatres){
+            errorResponse.msg = "No theatre found"
+            return res.status(404).json(errorResponse)
+        }
+        successResponse.msg = "These are the theatres"
+        successResponse.data = theatres
+        return res.status(200).json(successResponse)
+    } catch (error) {
+        errorResponse.msg = error
+        console.log(error)
+        return res.status(500).json(errorResponse)
+    }
+}
 const getAllTheatre = async (req,res) =>{
     try {
         const theatres = await Theatre.find()
@@ -91,11 +118,10 @@ const updateTheatreByAddMovie = async(req,res) =>{
             theatre.movies.push(movieId)
         })
     }else{
-        // const deletedMovies = await theatre.movies.findByIdAndDelete(movies)
-        // if(!deletedMovies){
-        //     errorResponse.msg = "This movie is not available in this theatre"
-        //     return res.status(404).json(errorResponse)
-        // } 
+        // const savedMovies = await theatre.movies
+        // savedMovies.forEach((movie)=>{
+        //     savedMovies = movieIds.filter((id)=>id == movie)
+        // })
     }
     await theatre.save()
     successResponse.msg = "Successfully updated the movie in the theatre"
@@ -109,4 +135,4 @@ const updateTheatreByAddMovie = async(req,res) =>{
     return res.status(500).json(errorResponse)
    }
 }
-export {createTheatre,deleteTheatre,getTheatre,getAllTheatre,updateTheatreByAddMovie}
+export {createTheatre,deleteTheatre,getTheatre,getAllTheatre,updateTheatreByAddMovie,getTheatresByCityOrPinCode}
