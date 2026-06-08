@@ -59,18 +59,18 @@ const getTheatre = async(req,res) =>{
 
 const getTheatresByCityOrPinCode = async(req,res) =>{
     try {
-        const {city,pinCode,name} = req.query
+        const {city,pinCode,name,limit,skip} = req.query
         if(!(city || pinCode || name)){
             errorResponse.msg = "City or pinCode or name is required"
             return res.status(400).json(errorResponse)
         }
-        const theatres = await Theatre.findOne({
+        const theatres = await Theatre.find({
             $or:[
                 {city},
                 {pinCode},
                 {name}
             ]
-        })
+        }).limit(limit).skip(skip*limit)
         if(!theatres){
             errorResponse.msg = "No theatre found"
             return res.status(404).json(errorResponse)
@@ -86,7 +86,8 @@ const getTheatresByCityOrPinCode = async(req,res) =>{
 }
 const getAllTheatre = async (req,res) =>{
     try {
-        const theatres = await Theatre.find()
+        const {limit,skip} = req.query
+        const theatres = await Theatre.find().limit(limit).skip(skip*limit)
         successResponse.data = theatres
         successResponse.msg = "thease are all the theatres"
         return res.status(200).json(successResponse)
