@@ -32,7 +32,7 @@ const validationOfUpdateMovie = async(req,res,next)=>{
     return res.status(400).json(errorResponse)
   }
   if(!(Array.isArray(req.body.movies))){
-    errorResponse.msg = "movies type is expected array form"
+    errorResponse.msg = "movies type is expected array form" 
     return res.status(400).json(errorResponse)
   }
   if(req.body.movies.length == 0){
