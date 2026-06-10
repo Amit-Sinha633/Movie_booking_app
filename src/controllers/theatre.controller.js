@@ -63,38 +63,27 @@ const getTheatre = async (req, res) => {
   }
 };
 
-const getTheatresByCityOrPinCode = async (req, res) => {
-  try {
-    const { city, pinCode, name, limit, skip } = req.query;
-    if (!(city || pinCode || name)) {
-      errorResponse.msg = "City or pinCode or name is required";
-      return res.status(400).json(errorResponse);
-    }
-    const theatres = await Theatre.find({
-      $or: [{ city }, { pinCode }, { name }],
-    })
-      .limit(limit)
-      .skip(skip * limit);
-    if (!theatres) {
-      errorResponse.msg = "No theatre found";
-      return res.status(404).json(errorResponse);
-    }
-    successResponse.msg = "These are the theatres";
-    successResponse.data = theatres;
-    return res.status(200).json(successResponse);
-  } catch (error) {
-    errorResponse.msg = error;
-    console.log(error);
-    return res.status(500).json(errorResponse);
-  }
-};
 const getAllTheatre = async (req, res) => {
   try {
     const query = {}
+    const pagination = {}
+    
     if(req.query && req.query.city){
       query.city = req.query.city
     }
-    const theatres = await Theatre.find(query)
+    if(req.query && req.query.movieId){
+      query.movies = {$all:req.query.movieId}
+    }
+    if(req.query && req.query.pinCode){
+      query.pinCode = req.query.pinCode
+    }
+    if(req.query && req.query.limit){
+      pagination.limit = Number(req.query.limit)
+    }
+    if(req.query && req.query.skip){
+      pagination.skip = Number(req.query.skip)
+    }
+    const theatres = await Theatre.find(query).limit(pagination.limit).skip(pagination.skip)
     successResponse.data = theatres;
     successResponse.msg = "thease are all the theatres";
     return res.status(200).json(successResponse);
@@ -122,16 +111,14 @@ const updateTheatreByAddMovie = async (req, res) => {
       });
     }
     if (insert) {
-      await Theatre.findByIdAndUpdate(
+      await Theatre.updateOne(
         {_id:theatreId},
-        {$addToSet:{movies:{$each: movieIds}}},
-        {new:true}
+        {$addToSet:{movies:{$each: movieIds}}}
       )
     } else {
-      await Theatre.findByIdAndUpdate(
+      await Theatre.updateOne(
         {_id:theatreId},
-        {$pull:{movies:{$in:movieIds}}},
-        {new:true}
+        {$pull:{movies:{$in:movieIds}}}
       )
     }
     await theatre.save();
@@ -169,12 +156,34 @@ const updateTheatre = async(req,res) =>{
         return res.status(500).json(errorResponse)
     }
 }
+
+const getMovies = async(req,res) =>{
+  try {
+    const {theatreId} = req.params
+    if(!theatreId){
+      errorResponse.msg = "TheatreId is needed"
+      return res.status(400).json(errorResponse)
+    }
+    const movies = await Theatre.findOne({_id:theatreId},{name:1,movies:1,address:1}).populate("movies")
+    if(!movies){
+      errorResponse.msg = "No thetare found from the given theatreId"
+      return res.status(404).json(errorResponse)
+    }
+    successResponse.data = movies
+    return res.status(200).json(successResponse)
+  } catch (error) {
+    errorResponse.err = error
+    errorResponse.msg = "Something went wrong from server side"
+    return res.status(500).json(errorResponse)
+  }
+}
+
 export {
   createTheatre,
   deleteTheatre,
   getTheatre,
   getAllTheatre,
   updateTheatreByAddMovie,
-  getTheatresByCityOrPinCode,
-  updateTheatre
+  updateTheatre,
+  getMovies
 };
